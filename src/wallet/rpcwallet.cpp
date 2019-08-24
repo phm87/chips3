@@ -952,6 +952,86 @@ UniValue movecmd(const JSONRPCRequest& request)
     return true;
 }
 
+UniValue cleanwallettransactions(const JSONRPCRequest& request)
+{
+    CWallet * const pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp)
+        throw std::runtime_error(
+            "cleanwallettransactions \"txid\"\n"
+            "\nRemove all txs that are spent. You can clear all txs bar one, by specifiying a txid.\n"
+            "\nPlease backup your wallet.dat before running this command.\n"
+            "\nArguments:\n"
+            "1. \"txid\"    (string, optional) The transaction id to keep.\n"
+            "\nResult:\n"
+            "{\n"
+            "  \"total_transactons\" : n,         (numeric) Transactions in wallet.\n"
+            "  \"remaining_transactons\" : n,     (numeric) Transactions in wallet after clean.\n"
+            "  \"removed_transactons\" : n,       (numeric) The number of transactions removed.\n"
+            "}\n"
+            "\nExamples:\n"
+            + HelpExampleCli("cleanwallettransactions", "")
+            + HelpExampleCli("cleanwallettransactions","\"1075db55d416d3ca199f55b6084e2115b9345e16c5cf302fc80e9d5fbf5d48d\"")
+            + HelpExampleRpc("cleanwallettransactions", "")
+            + HelpExampleRpc("cleanwallettransactions","\"1075db55d416d3ca199f55b6084e2115b9345e16c5cf302fc80e9d5fbf5d48d\"")
+        );
+
+    LOCK2(cs_main, pwallet->cs_wallet);
+    UniValue ret(UniValue::VOBJ);
+    uint256 exception; int32_t txs = pwallet->mapWallet.size();
+    std::vector<uint256> TxToRemove;
+    if (request.params.size() == 1)
+    {
+            throw JSONRPCError(RPC_INVALID_PARAMETER,"\nPeoblzm with pwallet->IsMine on a CTransactionRef instead of CTransaction!\n");
+    }
+    else
+    {
+        // get all locked utxos to relock them later.
+        std::vector<COutPoint> vLockedUTXO;
+        pwallet->ListLockedCoins(vLockedUTXO);
+        // unlock all coins so that the following call containes all utxos.
+        pwallet->UnlockAllCoins();
+        // listunspent call... this gets us all the txids that are unspent, we search this list for the oldest tx,
+        std::vector<COutput> vecOutputs;
+        assert(pwallet != NULL);
+        pwallet->AvailableCoins(vecOutputs, false, NULL, true);
+        int32_t oldestTxDepth = 0;
+        for (const COutput& out : vecOutputs) {
+          if ( out.nDepth > oldestTxDepth )
+              oldestTxDepth = out.nDepth;
+        }
+        oldestTxDepth = oldestTxDepth + 1; // add extra block just for safety.
+        // lock all the previouly locked coins.
+        for (const COutPoint& outpt : vLockedUTXO) {
+            pwallet->LockCoin(outpt);
+        }
+
+        // then add all txs in the wallet before this block to the list to remove.
+        for (std::map<uint256, CWalletTx>::iterator it = pwallet->mapWallet.begin(); it != pwallet->mapWallet.end(); ++it)
+        {
+            const CWalletTx& wtx = (*it).second;
+            if (wtx.GetDepthInMainChain() > oldestTxDepth)
+                TxToRemove.push_back(wtx.GetHash());
+        }
+    }
+
+    // erase txs
+    for (uint256& hash : TxToRemove)
+    {
+        pwallet->EraseFromWallet(hash);
+        LogPrintf("Erased %s from wallet.\n",hash.ToString().c_str());
+    }
+
+    // build return JSON for stats.
+    int remaining = pwallet->mapWallet.size();
+    ret.push_back(Pair("total_transactons", (int)txs));
+    ret.push_back(Pair("remaining_transactons", (int)remaining));
+    ret.push_back(Pair("removed_transactions", (int)(txs-remaining)));
+    return (ret);
+}
 
 UniValue sendfrom(const JSONRPCRequest& request)
 {
@@ -3054,6 +3134,122 @@ UniValue resendwallettransactions(const JSONRPCRequest& request)
     return result;
 }
 
+UniValue dpowlistunspent(const JSONRPCRequest& request)
+{
+    CWallet * const pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+    int nMinDepth = 1;
+    int nMaxDepth = 9999999;
+    CAmount nMinimumAmount = 0;
+    CAmount nMaximumAmount = MAX_MONEY;
+    CAmount nMinimumSumAmount = MAX_MONEY;
+    uint64_t nMaximumCount = 0;
+    CAmount value = 10000; // size of BTC utxos to look for.
+// const std::set<CTxDestination> &destinations, 
+
+    ObserveSafeMode();
+
+    if (!request.params[0].isNull()) {
+        RPCTypeCheckArgument(request.params[0], UniValue::VNUM);
+        nMinDepth = request.params[0].get_int();
+    }
+
+    if (!request.params[1].isNull()) {
+        RPCTypeCheckArgument(request.params[1], UniValue::VNUM);
+        nMaxDepth = request.params[1].get_int();
+    }
+
+    std::set<CTxDestination> destinations;
+    if (!request.params[2].isNull()) {
+        RPCTypeCheckArgument(request.params[2], UniValue::VARR);
+        UniValue inputs = request.params[2].get_array();
+        for (unsigned int idx = 0; idx < inputs.size(); idx++) {
+            const UniValue& input = inputs[idx];
+            CTxDestination dest = DecodeDestination(input.get_str());
+            if (!IsValidDestination(dest)) {
+                throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, std::string("Invalid Bitcoin address: ") + input.get_str());
+            }
+            if (!destinations.insert(dest).second) {
+                throw JSONRPCError(RPC_INVALID_PARAMETER, std::string("Invalid parameter, duplicated address: ") + input.get_str());
+            }
+        }
+    }
+
+    bool include_unsafe = true;
+    if (!request.params[3].isNull()) {
+        RPCTypeCheckArgument(request.params[3], UniValue::VBOOL);
+        include_unsafe = request.params[3].get_bool();
+    }
+
+    if (!request.params[4].isNull()) {
+        const UniValue& options = request.params[4].get_obj();
+
+        if (options.exists("minimumAmount"))
+            nMinimumAmount = AmountFromValue(options["minimumAmount"]);
+
+        if (options.exists("maximumAmount"))
+            nMaximumAmount = AmountFromValue(options["maximumAmount"]);
+
+        if (options.exists("minimumSumAmount"))
+            nMinimumSumAmount = AmountFromValue(options["minimumSumAmount"]);
+
+        if (options.exists("maximumCount"))
+            nMaximumCount = options["maximumCount"].get_int64();
+    }
+
+
+    assert(pwallet != NULL);
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    UniValue results(UniValue::VARR);
+    static std::vector<COutput> vOutputsSaved;
+    if ( vOutputsSaved.size() == 0 )
+    {
+        std::vector<COutput> vecOutputs;
+        //pwallet->AvailableCoins(vecOutputs, false, NULL, true);
+        pwallet->AvailableCoins(vecOutputs, false, nullptr, nMinimumAmount, nMaximumAmount, nMinimumSumAmount, nMaximumCount, nMinDepth, nMaxDepth);
+        for (const COutput& out : vecOutputs)
+        {
+            int nDepth = out.tx->GetDepthInMainChain();
+            if (out.nDepth < nMinDepth || out.nDepth > nMaxDepth)
+                continue;
+
+            CTxDestination address;
+            const CScript& scriptPubKey = out.tx->tx->vout[out.i].scriptPubKey;
+            bool fValidAddress = ExtractDestination(scriptPubKey, address);
+
+            if (destinations.size() && (!fValidAddress || !destinations.count(address)))
+                continue;
+
+            CAmount nValue = out.tx->tx->vout[out.i].nValue;
+            if ( nValue != value )
+              continue;
+            vOutputsSaved.push_back(out);
+        }
+    }
+    if ( vOutputsSaved.size() > 0 )
+    {
+        const COutput& out = vOutputsSaved.back();
+        const CScript& pk = out.tx->tx->vout[out.i].scriptPubKey;
+        UniValue entry(UniValue::VOBJ);
+        entry.push_back(Pair("txid", out.tx->GetHash().GetHex()));
+        entry.push_back(Pair("vout", out.i));
+        entry.push_back(Pair("generated", out.tx->IsCoinBase()));
+        CTxDestination address;
+        const CScript& scriptPubKey = out.tx->tx->vout[out.i].scriptPubKey;
+        bool fValidAddress = ExtractDestination(scriptPubKey, address);
+        entry.push_back(Pair("address", EncodeDestination(address)));
+        entry.push_back(Pair("amount", ValueFromAmount(value)));
+        entry.push_back(Pair("scriptPubKey", HexStr(scriptPubKey.begin(), scriptPubKey.end())));
+        entry.push_back(Pair("spendable", out.fSpendable));
+        results.push_back(entry);
+        vOutputsSaved.pop_back();
+    }
+    return results;
+}
+
 UniValue listunspent(const JSONRPCRequest& request)
 {
     CWallet * const pwallet = GetWalletForJSONRPCRequest(request);
@@ -4033,6 +4229,7 @@ static const CRPCCommand commands[] =
     { "wallet",             "listsinceblock",                   &listsinceblock,                {"blockhash","target_confirmations","include_watchonly","include_removed"} },
     { "wallet",             "listtransactions",                 &listtransactions,              {"account","count","skip","include_watchonly"} },
     { "wallet",             "listunspent",                      &listunspent,                   {"minconf","maxconf","addresses","include_unsafe","query_options"} },
+    { "wallet",             "dpowlistunspent",          &dpowlistunspent,          {"minconf","maxconf","addresses","include_unsafe","query_options"} },
     { "wallet",             "listwallets",                      &listwallets,                   {} },
     { "wallet",             "lockunspent",                      &lockunspent,                   {"unlock","transactions"} },
     { "wallet",             "move",                             &movecmd,                       {"fromaccount","toaccount","amount","minconf","comment"} },
