@@ -75,7 +75,7 @@
 // 3: 3rd season ending isnt known, so use very far times in future.
 // to add 4th season, change NUM_KMD_SEASONS to 4, add height of activation for third season ending one spot before 999999999.
 #define NUM_KMD_SEASONS 3
-#define NUM_KMD_NOTARIES 4
+#define NUM_KMD_NOTARIES 64
 // first season had no third party coins, so it ends at block 0. 
 // second season ends at approx block 4,173,578, please check this!!!!! it should be as close as possible to July 15th 0:00 UTC. 
 // third season ending height is unknown so it set to very very far in future. 
@@ -226,7 +226,8 @@ static const char *notaries_elected[NUM_KMD_SEASONS][NUM_KMD_NOTARIES][2] =
         {"alright_AR", "036a6bca1c2a8166f79fa8a979662892742346cc972b432f8e61950a358d705517" },
         {"strob_NA", "02049202f3872877e81035549f6f3a0f868d0ad1c9b0e0d2b48b1f30324255d26d" },
         {"dwy_EU", "037b29e58166f7a2122a9ebfff273b40805b6d710adc032f1f8cf077bdbe7c0d5c" },
-        {"phm87_SH", "03889a10f9df2caef57220628515693cf25316fe1b0693b0241419e75d0d0e66ed" },
+        
+        {"phm87x_SH", "03889a10f9df2caef57220628515693cf25316fe1b0693b0241419e75d0d0e66ed" },
         {"chainmakers_NA", "030e4822bddba10eb50d52d7da13106486651e4436962078ee8d681bc13f4993e9" },
         {"indenodes_EU", "03a416533cace0814455a1bb1cd7861ce825a543c6f6284a432c4c8d8875b7ace9" },
         {"blackjok3r_SH", "03d23bb5aad3c20414078472220cc5c26bc5aeb41e43d72c99158d450f714d743a" },
