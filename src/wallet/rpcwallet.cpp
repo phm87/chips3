@@ -987,11 +987,11 @@ UniValue cleanwallettransactions(const JSONRPCRequest& request)
     {
 //            throw JSONRPCError(RPC_INVALID_PARAMETER,"\nPeoblzm with pwallet->IsMine on a CTransactionRef instead of CTransaction!\n");
         exception.SetHex(request.params[0].get_str());
-        uint256 tmp_hash; CTransaction tmp_tx;
+        uint256 tmp_hash; CTransactionRef tmp_tx;
         // CTransactionRef tx 
         // GetTransaction(const uint256& hash, CTransactionRef& tx, const Consensus::Params& params, uint256& hashBlock, bool fAllowSlow = false, CBlockIndex* blockIndex = null
         // (hash, tx, Params().GetConsensus(), hashBlock, true)
-        if (GetTransaction(exception,tmp_tx,Params().GetConsensus(), tmp_hash,false))
+        if (GetTransaction(exception,tmp_tx,Params().GetConsensus(), tmp_hash, false))
         {
             if ( !pwallet->IsMine(tmp_tx) )
             {
