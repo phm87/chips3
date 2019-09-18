@@ -993,7 +993,7 @@ UniValue cleanwallettransactions(const JSONRPCRequest& request)
         // (hash, tx, Params().GetConsensus(), hashBlock, true)
         if (GetTransaction(exception,tmp_tx,Params().GetConsensus(), tmp_hash, false))
         {
-            if ( !pwallet->IsMine(tmp_tx) )
+            if ( !pwallet->IsMine(tmp_tx->get()) )
             {
                 throw runtime_error("\nThe transaction is not yours!\n");
             }
