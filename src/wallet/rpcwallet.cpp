@@ -985,7 +985,26 @@ UniValue cleanwallettransactions(const JSONRPCRequest& request)
     std::vector<uint256> TxToRemove;
     if (request.params.size() == 1)
     {
-            throw JSONRPCError(RPC_INVALID_PARAMETER,"\nPeoblzm with pwallet->IsMine on a CTransactionRef instead of CTransaction!\n");
+//            throw JSONRPCError(RPC_INVALID_PARAMETER,"\nPeoblzm with pwallet->IsMine on a CTransactionRef instead of CTransaction!\n");
+        exception.SetHex(request.params[0].get_str());
+        uint256 tmp_hash; CTransaction tmp_tx;
+        if (GetTransaction(exception,tmp_tx,tmp_hash,false))
+        {
+            if ( !pwallet->IsMine(tmp_tx) )
+            {
+                throw runtime_error("\nThe transaction is not yours!\n");
+            }
+            else
+            {
+                for (map<uint256, CWalletTx>::iterator it = pwallet->mapWallet.begin(); it != pwallet->mapWallet.end(); ++it)
+                {
+                    const CWalletTx& wtx = (*it).second;
+                    if ( wtx.GetHash() != exception )
+                    {
+                        TxToRemove.push_back(wtx.GetHash());
+                    }
+                }
+            }
     }
     else
     {
