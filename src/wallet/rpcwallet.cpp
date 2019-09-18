@@ -988,7 +988,8 @@ UniValue cleanwallettransactions(const JSONRPCRequest& request)
 //            throw JSONRPCError(RPC_INVALID_PARAMETER,"\nPeoblzm with pwallet->IsMine on a CTransactionRef instead of CTransaction!\n");
         exception.SetHex(request.params[0].get_str());
         uint256 tmp_hash; CTransaction tmp_tx;
-        if (GetTransaction(exception,tmp_tx,tmp_hash,false))
+        // CTransactionRef tx 
+        if (GetTransaction(exception,tmp_tx,tmp_hash,NULL))
         {
             if ( !pwallet->IsMine(tmp_tx) )
             {
