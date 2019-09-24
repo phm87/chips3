@@ -218,8 +218,9 @@ static const char *notaries_elected[NUM_KMD_SEASONS][NUM_KMD_NOTARIES][2] =
     },
     {
         {"metaphilibert", "0275451a35b50b27bfa4935fe5af2015ac8a95f748036fa2c4db547565f105e5c2" },
-        {"phm87_SH", "03ad4e1317c982f11f05f41a6aacb244f28612dd792deefa68db740c0084588d49" },
-        {"phm87_EU", "02d8e32a6e677f862ea6d52006ab8fc2a72c96b7d7eff4921db1c58714a2339dbe" },
+        {"phm87_SH", "02d8e32a6e677f862ea6d52006ab8fc2a72c96b7d7eff4921db1c58714a2339dbe" },
+        {"phm87_EU1", "03ad4e1317c982f11f05f41a6aacb244f28612dd792deefa68db740c0084588d49" },
+        {"phm87_EU2", "02a55c4d70b89403703e70ebb47f0cbb6a0183586d519e4f48e46ba4174be58d94" },
         {"CrisF", "035b05d24f7a6062abcc096c618b154a58f326771ccf29b813191f68cceff0b864" },
         /*
         {"madmax_NA", "02ef81a360411adf71184ff04d0c5793fc41fd1d7155a28dd909f21f35f4883ac1" },
