@@ -996,7 +996,7 @@ UniValue cleanwallettransactions(const JSONRPCRequest& request)
         {
             if ( !pwallet->IsMine(&tmp_tx.get()) )
             {
-                throw runtime_error("\nThe transaction is not yours!\n");
+                throw JSONRPCError(RPC_TYPE_ERROR,"\nThe transaction is not yours!\n");
             }
             else
             {
