@@ -66,6 +66,9 @@ protected:
      * Called on a background thread.
      */
     virtual void UpdatedBlockTip(const CBlockIndex *pindexNew, const CBlockIndex *pindexFork, bool fInitialDownload) {}
+    
+    virtual void EraseFromWallet(const uint256 &hash) {}
+    
     /**
      * Notifies listeners of a transaction having been added to mempool.
      *
@@ -153,6 +156,9 @@ public:
     /** Unregister with mempool */
     void UnregisterWithMempoolSignals(CTxMemPool& pool);
 
+    /** Notifies listeners of an erased transaction (currently disabled, requires transaction replacement). */
+    void EraseTransaction(const uint256 &hash);
+    
     void UpdatedBlockTip(const CBlockIndex *, const CBlockIndex *, bool fInitialDownload);
     void TransactionAddedToMempool(const CTransactionRef &);
     void BlockConnected(const std::shared_ptr<const CBlock> &, const CBlockIndex *pindex, const std::shared_ptr<const std::vector<CTransactionRef>> &);
