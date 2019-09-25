@@ -959,7 +959,8 @@ UniValue cleanwallettransactions(const JSONRPCRequest& request)
     if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
         return NullUniValue;
     }
-
+    return NullUniValue;
+/*
     if (request.fHelp)
         throw std::runtime_error(
             "cleanwallettransactions \"txid\"\n"
@@ -1054,6 +1055,7 @@ UniValue cleanwallettransactions(const JSONRPCRequest& request)
     ret.push_back(Pair("remaining_transactons", (int)remaining));
     ret.push_back(Pair("removed_transactions", (int)(txs-remaining)));
     return (ret);
+    */
 }
 
 UniValue sendfrom(const JSONRPCRequest& request)
