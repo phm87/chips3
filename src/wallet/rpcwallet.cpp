@@ -3165,7 +3165,7 @@ UniValue dpowlistunspent(const JSONRPCRequest& request)
         return NullUniValue;
     }
     
-    if (fHelp || params.size() < 2)
+    if (request.fHelp || request.params.size() < 2)
         throw JSONRPCError(RPC_INVALID_PARAMETER, 
             "dpowlistunspent satoshies address (reset)\n"
             "Only for Notary Nodes, returns a single utxo of the requested size from the specified address from the utxo cache.\n"
