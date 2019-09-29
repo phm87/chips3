@@ -65,7 +65,7 @@
 #define portable_mutex_unlock pthread_mutex_unlock
 
 #define CRYPTO777_PUBSECPSTR "020e46e79a2a8d12b9b5d12c7a91adb4e454edfae43c0a0cb805427d2ac7613fd9"
-#define KOMODO_MINRATIFY 3
+#define KOMODO_MINRATIFY 11
 #define KOMODO_ELECTION_GAP 2000
 #define KOMODO_ASSETCHAIN_MAXLEN 65
 
