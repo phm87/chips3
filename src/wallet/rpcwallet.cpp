@@ -3164,6 +3164,13 @@ UniValue dpowlistunspent(const JSONRPCRequest& request)
     if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
         return NullUniValue;
     }
+    
+    if (fHelp || params.size() < 2)
+        throw JSONRPCError(RPC_INVALID_PARAMETER, 
+            "dpowlistunspent satoshies address (reset)\n"
+            "Only for Notary Nodes, returns a single utxo of the requested size from the specified address from the utxo cache.\n"
+            );
+    
     int nMinDepth = 1;
     int nMaxDepth = 9999999;
     CAmount nMinimumAmount = 0;
@@ -3176,15 +3183,15 @@ UniValue dpowlistunspent(const JSONRPCRequest& request)
     ObserveSafeMode();
 
     if (!request.params[0].isNull()) {
-        RPCTypeCheckArgument(request.params[0], UniValue::VNUM);
-        nMinDepth = request.params[0].get_int();
+        CAmount value = request.params[0].get_int();
+        if ( value < 10000 )
+            value = 10000;
     }
 
-    if (!request.params[1].isNull()) {
-        RPCTypeCheckArgument(request.params[1], UniValue::VNUM);
-        nMaxDepth = request.params[1].get_int();
-    }
-
+    CTxDestination dest;
+    if (!IsValidDestination(dest = DecodeDestination(request.params[1].get_str())))
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, std::string("Invalid Chips address: ") + request.params[1].get_str());
+    /*
     std::set<CTxDestination> destinations;
     if (!request.params[2].isNull()) {
         RPCTypeCheckArgument(request.params[2], UniValue::VARR);
@@ -3200,7 +3207,7 @@ UniValue dpowlistunspent(const JSONRPCRequest& request)
             }
         }
     }
-
+    
     bool include_unsafe = true;
     if (!request.params[3].isNull()) {
         RPCTypeCheckArgument(request.params[3], UniValue::VBOOL);
@@ -3222,8 +3229,10 @@ UniValue dpowlistunspent(const JSONRPCRequest& request)
         if (options.exists("maximumCount"))
             nMaximumCount = options["maximumCount"].get_int64();
     }
+*/
 
-
+    bool include_unsafe = true;
+    
     assert(pwallet != NULL);
     LOCK2(cs_main, pwallet->cs_wallet);
 
@@ -3244,7 +3253,7 @@ UniValue dpowlistunspent(const JSONRPCRequest& request)
             const CScript& scriptPubKey = out.tx->tx->vout[out.i].scriptPubKey;
             bool fValidAddress = ExtractDestination(scriptPubKey, address);
 
-            if (destinations.size() && (!fValidAddress || !destinations.count(address)))
+            if (!fValidAddress || address != dest))
                 continue;
 
             CAmount nValue = out.tx->tx->vout[out.i].nValue;
