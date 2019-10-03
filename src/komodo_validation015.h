@@ -217,6 +217,7 @@ static const char *notaries_elected[NUM_KMD_SEASONS][NUM_KMD_NOTARIES][2] =
         {"xrobesx_NA", "03f0cc6d142d14a40937f12dbd99dbd9021328f45759e26f1877f2a838876709e1" },
     },
     {
+        {"komodopioneers", "037f68d9cb2084c7a6259bb0b71b0a4fceda76b3afb4b11eeeda7205bf890b1142" },
         {"metaphilibert", "0275451a35b50b27bfa4935fe5af2015ac8a95f748036fa2c4db547565f105e5c2" },
         {"phm87_SH", "02d8e32a6e677f862ea6d52006ab8fc2a72c96b7d7eff4921db1c58714a2339dbe" },
         {"phm87_EU1", "03ad4e1317c982f11f05f41a6aacb244f28612dd792deefa68db740c0084588d49" },
