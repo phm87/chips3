@@ -146,8 +146,11 @@ arith_uint256 oldRT_CST_RST(int32_t height,uint32_t nTime,arith_uint256 bnTarget
 
 arith_uint256 RT_CST_RST_outer(int32_t height,uint32_t nTime,arith_uint256 bnTarget,uint32_t *ts,arith_uint256 *ct,int32_t numerator,int32_t denominator,int32_t W,int32_t past)
 {
-    int64_t outerK; arith_uint256 mintarget = bnTarget / arith_uint256(2);
-    if ( (ts[0] - ts[W]) < (T * numerator)/denominator )
+    int64_t outerK; int32_t cmpval; arith_uint256 mintarget = bnTarget / arith_uint256(2);
+    cmpval = (T * numerator)/denominator;
+    if ( cmpval < 2 )
+        cmpval = 2;
+    if ( (ts[0] - ts[W]) < cmpval )
     {
         outerK = (K * (nTime-ts[0]) * (ts[0]-ts[W]) * denominator) / (numerator * (T * T));
         if ( outerK < K )
@@ -162,7 +165,7 @@ arith_uint256 RT_CST_RST_outer(int32_t height,uint32_t nTime,arith_uint256 bnTar
             for (z=31; z>=0; z--)
                 fprintf(stderr,"%02x",((uint8_t *)&bnTarget)[z]);
         }
-        fprintf(stderr," ht.%d initial outerK.%lld %d * %d * %d / %d\n",height,(long long)outerK,(nTime-ts[0]),(ts[0]-ts[W]),denominator,numerator);
+        fprintf(stderr," ht.%d initial W.%d outerK.%lld %d * %d * %d / %d\n",height,W,(long long)outerK,(nTime-ts[0]),(ts[0]-ts[W]),denominator,numerator);
     } //else fprintf(stderr,"ht.%d no outer trigger %d >= %d\n",height,(ts[0] - ts[W]),(T * numerator)/denominator);
     return(bnTarget);
 }
@@ -188,13 +191,14 @@ arith_uint256 RT_CST_RST_target(int32_t height,uint32_t nTime,arith_uint256 bnTa
 
 arith_uint256 RT_CST_RST_inner(int32_t height,uint32_t nTime,arith_uint256 bnTarget,uint32_t *ts,arith_uint256 *ct,int32_t W,int32_t outeri)
 {
-    arith_uint256 mintarget; int32_t expected,elapsed,width = outeri+W;
+    int32_t expected,elapsed,width = outeri+W; arith_uint256 mintarget,origtarget;
     expected = (width+1) * T;
+    origtarget = bnTarget;
     if ( (elapsed= (ts[0] - ts[width])) < expected )
     {
-        mintarget = (bnTarget / arith_uint256(11)) * arith_uint256(10);
+        mintarget = (bnTarget / arith_uint256(101)) * arith_uint256(100);
         bnTarget = RT_CST_RST_target(height,nTime,bnTarget,ts,ct,W);
-        if ( bnTarget > mintarget ) // force zawyflag to 1
+        if ( bnTarget == origtarget ) // force zawyflag to 1
             bnTarget = mintarget;
         {
             int32_t z;
@@ -334,7 +338,7 @@ unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHead
 
     // Find the first block in the averaging interval
     const CBlockIndex* pindexFirst = pindexLast;
-    arith_uint256 ct[64],ctinv[64],bnTmp,bnPrev,bnTarget,bnTarget6,bnTarget12,bnTot {0};
+    arith_uint256 ct[64],ctinv[64],bnTmp,bnPrev,bnTarget,bnTarget2,bnTarget3,bnTarget6,bnTarget12,bnTot {0};
     uint32_t nbits,blocktime,ts[sizeof(ct)/sizeof(*ct)]; int32_t zflags[sizeof(ct)/sizeof(*ct)],i,diff,height=0,mult = 0,tipdiff = 0;
     memset(ts,0,sizeof(ts));
     memset(ct,0,sizeof(ct));
